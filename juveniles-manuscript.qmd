@@ -1,0 +1,298 @@
+---
+title: "Limited impact of chytridiomycosis on juvenile frogs in a recovered species"     
+author: "Matthijs Hollanders$^1$*, Laura F. Grogan$^2$, Hamish I. McCallum$^2$, Laura A. Brannelly$^3$, David A. Newell$^1$"
+format:
+  pdf:
+    toc: false
+editor_options:
+  chunk_output_type: console
+execute:
+  include: false
+bibliography: multievent.bib
+geometry: margin = 1in
+linestretch: 2
+header-includes: |
+  \usepackage{titling}
+  \pretitle{\begin{flushleft}\Large\bfseries}
+  \posttitle{\end{flushleft}}  
+  \preauthor{\begin{flushleft}\large}
+  \postauthor{\end{flushleft}} 
+  \usepackage[none]{hyphenat}
+  \usepackage{lineno}
+  \linenumbers
+  \usepackage{blkarray}
+  \usepackage{multirow}
+  \usepackage{float}
+  \floatplacement{figure}{H}
+  \usepackage[bf,font=normalsize,labelsep=quad]{caption}
+  \RedeclareSectionCommand[beforeskip=0pt,afterskip=1pt]{section}
+  \RedeclareSectionCommand[beforeskip=0pt,afterskip=1pt]{subsection}
+  \RedeclareSectionCommand[beforeskip=0pt,afterskip=1pt]{subsubsection}
+  \newcommand{\beginsupplement}{
+    \setcounter{table}{0} 
+    \renewcommand{\thetable}{S\arabic{table}}
+    \setcounter{figure}{0} 
+    \renewcommand{\thefigure}{S\arabic{figure}}}
+---
+
+$^1$Faculty of Science and Engineering, Southern Cross University, Lismore, New South Wales, Australia, matthijs.hollanders\@gmail.com\
+$^2$Centre for Planetary Health and Food Security, and School of Environment and Science, Griffith University, Southport, QLD, Australia\
+$^3$Veterinary BioSciences, Faculty of Veterinary and Agricultural Sciences, The University of Melbourne, Werribee, VIC, Australia
+
+\*Corresponding author, [matthijs.hollanders\@gmail.com](mailto:matthijs.hollanders@gmail.com){.email}
+
+\ 
+
+Authorship Contributions: MH conceived the study and conducted the field work, laboratory work, statistical analysis, and the writing of the first draft. LG and LB assisted with laboratory work. LG, LB, HM, and DN contributed ideas and to the writing of the final draft.
+
+```{r}
+options(scipen = 999, digits = 2)
+
+library(tidyverse)
+library(HDInterval)
+library(nimble)
+
+m1draws <- read_csv("mcmc-samples/m1draws.csv")
+m2draws <- read_csv("mcmc-samples/m2draws.csv")
+```
+
+\newpage
+
+# Abstract
+
+The amphibian chytrid fungus *Batrachochytrium dendrobatidis* (*Bd*) has caused catastrophic frog declines on several continents, but disease outcome is mediated by a number of factors. Host life stage is an important consideration, and many studies have highlighted the vulnerability of recently metamorphosed or juvenile frogs compared to adults. The majority of these studies have taken place in a laboratory setting, and there is a general paucity of longitudinal field studies investigating the influence of life stage on disease outcome. In this study, we assessed the effect of endemic *Bd* on juvenile *Mixophyes fleayi* (Fleay's barred frog) in subtropical eastern Australian rainforest. Using photographic mark-recapture, we made 386 captures of 116 individuals and investigated the effect of *Bd* infection intensity on the apparent mortality rates of frogs using a multievent model correcting for infection state misclassification. We found that *Bd* infection status nor infection intensity were not correlated with mortality in juvenile frogs, counter to the expectation that early life stages are more vulnerable to disease, despite high infection prevalence (`r median(m1draws$prev_mu)`, 95% HDPI \[`r hdi(m1draws$prev_mu)`\]). Additionally, we found that observed infection prevalence and intensity were somewhat lower for juveniles than adults. Our results indicate that in this *Bd*-recovered species, the realised impacts of chytridiomycosis on juveniles were apparently low, likely resulting in high recruitment contributing to population stability. We highlight the importance of investigating factors relating to disease outcome in a field setting and make recommendations for future studies.
+
+**Keywords:** amphibian, chytridiomycosis, life stage, *Batrachochytrium dendrobatidis*, photographic mark-recapture, multievent
+
+\newpage
+
+# Introduction
+
+Amphibians have declined around the world in part due to the global invasion of the amphibian chytrid fungus (*Batrachochytrium dendrobatidis*, hereafter *Bd*), which caused the lethal disease chytridiomycosis in more than 500 species around the world [@scheele2019]. Disease susceptibility is influenced by a number of factors, including host species [@scheele2019], *Bd* lineage [@ohanlon2018], history of *Bd* exposure [@knapp2016; @waddle2019; @hollanders2022a], environmental conditions [@kriger2007], and host life stage [@sauer2020]. Recently metamorphosed (juvenile) frogs are often reported to be more susceptible to chytridiomycosis than older life stages, potentially caused by restructuring of the immune system that occurs during metamorphosis [@rollins-smith2011; @waddle2019; @sauer2020; @humphries2022].
+
+Clinical experiments have found decreased survival after *Bd* exposure for juveniles compared to subadults and adults, especially just after metamorphosis [@rachowicz2006; @ortiz-santaliestra2013; @abubakar2016; @brannelly2018; @waddle2019]. Recently metamorphosed *Anaxyrus americanus* infected in the lab were three times more likely to die than four week old juveniles [@ortiz-santaliestra2013]. In *Litoria aurea*, infection intensities and mortality were higher for subadults than adults, and again higher for juveniles than subadults [@abubakar2016]. High mortality in *Rana onca* immediately following metamorphosis was suggestive of reduced immunocompetence at this life stage [@waddle2019]. Opposite effects have also been found, where older frogs were found to be more susceptible to disease and carrying higher infection intensities [@bradley2019]. Nevertheless, for all the merits of laboratory studies, there can be confounding effects [e.g., thermal mismatches, @sauer2020] that limit extrapolation to field conditions.
+
+Few longitudinal field studies have investigated the effects of life stage on disease outcome. Although some cross-sectional studies have hinted at increased vulnerality for juveniles [@russell2010; @walker2010], these types of studies are generally unsuitable to assess outcomes of infection. One five-year study on *Rana sierrae* and *R. muscosa* found higher *Bd* infection intensities for juveniles than adults, and mortality at metamorphosis---known to occur in challenge experiments [@rachowicz2006]---was hypothesised to explain the small population sizes at some sites. However, this study did not not track juveniles through time. Another seven-year study on *Bombina variegata* found decreased survival probabilities for juveniles compared to adults, but with large uncertainty due to the paucity of juvenile recaptures [@spitzen-vandersluijs2017]. Detailed field studies to assess the effect of *Bd* on juvenile frogs are warranted to gain a more complete understanding of host-pathogen interactions in the field.
+
+To investigate juvenile susceptibility to chytridiomycosis we conducted a 3.5-month photographic mark-recapture study of recently metamorphosed *Mixophyes fleayi* (Fleay's barred frog) at a rainforest site on the east coast of Australia. This endangered narrow-range endemic stream frog has demonstrated a strong recovery following population collapse associated with the *Bd* epidemic, and adult populations are currently stable with chytridiomycosis-related mortality largely confined to individuals with high *Bd* loads [@newell2013; @quick2015; @hollanders2022a]. First, we compared *Bd* infection patterns (infection status and pathogen loads) between juveniles and adults over the same time period. Then, we used a novel multievent model to investigate juvenile susceptibility to chytridiomycosis and to quantify infection dynamics (rates of gaining and clearing infections) in a post-metamorphic cohort.
+
+\newpage
+
+# Materials and methods
+
+## Field surveys
+
+We conducted 14 weekly surveys (20 February--3 June 2020) for juvenile *Mixophyes fleayi* on a 500 m road transect adjacent to Brindle Creek in Border Ranges National Park, New South Wales, Australia. *Mixophyes fleayi* are large stream-associated frogs with Brindle Creek adult males weighing on average 34 g and females weighing 68 g [@hollanders2022a]. For more details on the study species and site, see @hollanders2022a. We selected the transect because juvenile frogs were observed to congregate along the roadside from summer through autumn in greater numbers than found along the creek, suggesting juveniles dispersed to this habitat post-metamorphosis. Frogs were located by eyeshine using a headtorch, photographed dorsally *in situ*, and captured in a fresh plastic bag. Frogs were weighed to the 0.01 g using a digital scale (Homgeek CX-128) and snout-urostyle length (SUL) was derived from photographs (see below). We sampled for *Bd* using sterile rayon-tipped swabs (Medical Wire & Equipment MW100), applying five strokes for each hind foot, inner thigh, flank, and along the midventer, yielding 35 total strokes per frog. At the start of each survey, we used a Kestrel 3500 Weather Meter to measure humidity and air pressure, and temperature was recorded every 2 hours with a datalogger (HOBO MX2201) installed in the surrounding rainforest for the duration of the study.
+
+## Photographic identification
+
+We used photographic mark-recapture because small body sizes impeded microchipping and because pattern retention facilitated individual identification (@fig-frogs). Frogs were photographed dorsally to allow individual recognition during subsequent captures using a Nikon D750 DSLR, Sigma 105mm macro lens, and diffused hotshoe flash (Yongnuo YN-560iii with Lumiquest III softbox). The focus ring was fixed in position for the duration of each survey to facilitate length measurements post-survey. After photographing a ruler at the start of each survey to calibrate measurements, pixel length was converted to the nearest 0.1 mm and SUL was measured using the Ruler Tool in Adobe Photograph CC 2018. Photos were matched to individuals manually by two independent investigators to limit errors, and equivocal identifications were discussed until a consensus was reached [@morrison2011].
+
+## Detecting and quantifying *Bd* infections
+
+We used Prepman^®^ Ultra (Applied Biosystems) to extract *Bd* DNA from swab samples and used qPCR to quantify infection intensities of swabs using synthetic ITS fragments as reference standards [@boyle2004; @hyatt2007]. For details of the laboratory protocol, see @hollanders2022a. Swab samples were run in duplicate and were considered positive when at least one well amplified \> 1 ITS copy. Infection intensities are reported as log~10~ ITS gene copies per swab.
+
+## Statistical analysis
+
+### *Bd* infection patterns and comparison with adults
+
+To identify patterns in infection status and infection intensity, we fit logistic and linear regression models, respectively, to the infection status and log~10~ infection intensities, respectively, of collected swab samples. In addition to the juveniles sampled in this study, we incorporated 92 swab samples collected from three mark-recapture surveys conducted for adult frogs at this site over the same study period [@hollanders2022a]. We included average temperature (from the datalogger) and (log) rainfall [extracted from interpolated data provided by the database SILO, @jeffrey2001] over the week prior to sample collection (and their interaction) as predictors on the probability of infection and the mean of infection intensities, respectively, and included random individual effects to account for repeated measures. The standard deviations (SDs) of the infection intensity distributions were estimated separately for each life stage.
+
+### Mark-recapture analysis
+
+We fitted a multievent model to the mark-recapture data to investigate the effect of *Bd* infection on juvenile *M. fleayi* mortality and to assess infection dynamics [@hollanders2022c]. This model incorporates state assignment errors (false-negative and false-positive errors) in both the swabbing and the qPCR protocols. We formulated the model with a continuous-time Arnason-Schwarz ecological process, with two alive states (uninfected and infected) and one dead state, with fortnightly primary occasion intervals [@schwarz1993; @glennie2022]. In order to fit this model, robust design sampling is required (multiple "secondary" surveys within primary periods of assumed closure), so we pooled pairs of consecutive weeks into primary occasions, yielding eight primary occasions with two secondary surveys each (with two missing secondaries). Although the closure assumption between consecutive weeks was likely violated, correct state assignment is notoriously low using swabs [30--60%, @shin2014; @direnzo2018]---particularly using Prepman^®^ [@brannelly2020]---leading us to favor this model over a traditional Arnason-Schwarz model where the estimates for infection dynamics would be unreliable [@hollanders2022c]. Like other mark-recapture models, we are modeling apparent mortality because true mortality is confounded with permanent emigration from the study area, which was likely to be common with dispersing frogs. However, comparing state-specific apparent mortality differences is still possible under the assumption that permanent emigration behavior is equal between states.
+
+We modeled the parameters of the ecological process (hazard rates of mortality and gaining and clearing infections, log-link) and the probability of being infected with *Bd* at first capture (logit-link) as functions of body weight, body condition [scaled mass index, @peig2009], and average temperature over the primary occasion interval. We included *Bd* infection status and its interaction with body size as predictors on mortality to investigate whether more recently metamorphosed frogs were more vulnerable to infection. Rates of mortality and clearing infections also included latent time-varying individual *Bd* infection intensities as predictors. Recapture probabilities were modeled at the level of secondary surveys as logit-linear functions of temperature, humidity, and air pressure at the start of the survey, body weight, body condition, *Bd* infection status, *Bd* infection intensity, and random survey and individual effects. Note that body weight, body condition, and individual infection intensity are primary occasion-varying individual covariates. We modeled individual infection intensities (log~10~ *Bd* gene copies per swab) as coming from a Gaussian distribution with body weight, body condition, temperature, and random individual effects as predictors. We modeled the (true-positive) pathogen detection probabilities in the swabbing and qPCR processes as functions of individual and sample infection intensities, respectively, using Royle-Nichols models [e.g., $1-(1-r)^n$, @royle2006], and incorporated false-positive probabilities in both processes.
+
+### Variable selection
+
+We used reversible jump Markov chain Monte Carlo [RJMCMC, @green1995] for predictor variable selection and to test for the presence of false-positives in the swabbing and qPCR procedures. RJMCMC expands Metropolis-Hastings algorithms to sample from the posterior of a union of spaces of variable dimensions; i.e., it tests for whether the inclusion of certain parameters are consistent with the observed data. We applied RJMCMC to all predictor variables in both the infections model and the multievent model.
+
+### Model fitting
+
+We used **nimble** 0.12.2 [@devalpine2017; @devalpine2022] in R 4.2.2 [@rcoreteam2022] to sample from the joint posterior distributions using MCMC algorithms. All covariates including infection intensities were centered and scaled by two SDs [@gelman2008]. We used vague or weakly informative priors on most parameters: $\operatorname{Beta}(1, 1)$ on back-transformed logit-linear intercepts, $\operatorname{Exponential}(1)$ on back-transformed log-linear intercepts of hazard rates, $\textit{t}_4(3, 1)$ on infection intensity intercepts, and $\textit{t}^{(+)}_4(0, 1)$ on coefficients and SDs of random effects. We used a $0.5$ prior probability on RJMCMC inclusion probabilities. We used more informative $\operatorname{Beta}(1, 10)$ priors on false-positive probabilities in the pathogen detection protocol. Bounded (Beta, Exponential) prior distributions were transformed to the unbounded real line to improve MCMC performance using **nimbleNoBounds** [@pleydell2022].
+
+To account for missing values in covariate matrices, we imputed primary occasion-level body weight and body condition values for each primary that an individual was not observed using MCMC. For body condition, missing values were mean-imputed with random individual effects. For body weight, we fitted a linear growth model with correlated random individual intercepts and slopes---we refrained from modeling growth asymptotically because linear growth seemed reasonable, with the largest frog weighing \< 20% of an average adult male frog.
+
+For both the infection patterns models and the multievent model, we ran four chains for 50,000 iterations after discarding 10,000 as burn-in and thinned each chain by 10, yielding 20,000 posterior draws. We summarised posterior distributions with medians and 95% highest posterior density intervals (HPDI) and report RJMCMC inclusion probabilities where applicable. We present intercepts on the original scale for ease of interpretation (e.g., probabilities, rates), coefficients as untransformed from the link function, and report the SDs of the normally distributed random effects (also on the scale of the link function). Coefficients and false-positives were summarised from the full posterior distribution, including iterations where they were excluded by RJMCMC and toggled to 0.
+
+\newpage
+
+# Results
+
+## Sampling summary
+
+We made 386 captures of 116 unique juvenile *Mixophyes fleayi* (@fig-caps). The number of individuals captured per survey gradually increased, possibly as frogs metamorphosed and dispersed to the roadsides, peaking at 50 and gradually dropping to 0 after which surveys were terminated ([@fig-caps]a). Individuals were frequently recaptured, with 72% (83) being captured more than once, ranging from 1--9 captures per individual, with a median of three captures per individual ([@fig-caps]b). Measured body weights ranged from 0.46--6.41 g, corresponding to extremely recent metamorphs (i.e., within days) to young subadults (\< 20% of adult males and \< 10% of adult females) ([@fig-caps]c).
+
+## *Bd* infection patterns
+
+From 386 swabs collected from juvenile frogs, 101 (26%) had *Bd* detected and the average probability of infection was estimated to be `r median(m2draws$'psi_alpha[1]')` \[`r hdi(m2draws$'psi_alpha[1]')`\]; for adults, we detected *Bd* on 35 out of 92 (38%) swabs, with an estimated probability of infection of `r median(m2draws$'psi_alpha[2]')` \[`r hdi(m2draws$'psi_alpha[2]')`\] (@tbl-inf, [@fig-inf]a). This difference was notable, with adults being `r median(exp(logit(m2draws$'psi_alpha[2]') - logit(m2draws$'psi_alpha[1]')))` \[`r hdi(exp(logit(m2draws$'psi_alpha[2]') - logit(m2draws$'psi_alpha[1]')))`\] times more likely to return infected swabs. Mean estimated log~10~ infection intensities were `r median(m2draws$'mu_alpha[2]' / m2draws$'mu_alpha[1]')` times \[`r hdi(m2draws$'mu_alpha[2]' / m2draws$'mu_alpha[1]')`\] higher for adults (`r median(m2draws$'mu_alpha[2]')` \[`r hdi(m2draws$'mu_alpha[2]')`\]) compared to juveniles (`r median(m2draws$'mu_alpha[1]')` \[`r hdi(m2draws$'mu_alpha[1]')`\]), with no major differences in the SDs of the distributions (@tbl-inf, [@fig-inf]b). We found some evidence for positive *Bd* infection status being associated with lower temperatures (`r median(m2draws$'psi_beta[1]')` \[`r hdi(m2draws$'psi_beta[1]')`\], `r mean(m2draws$'psi_w[1]')` RJMCMC inclusion) and higher rainfall (`r median(m2draws$'psi_beta[2]')` \[`r hdi(m2draws$'psi_beta[2]')`\], `r mean(m2draws$'psi_w[2]')` RJMCMC inclusion), but not for *Bd* intensity (@tbl-inf).
+
+## Mark-recapture analysis
+
+Average fortnightly apparent mortality rates of juvenile *M. fleayi* were `r median(m1draws$phi_alpha)` \[`r hdi(m1draws$phi_alpha)`\], corresponding to a survival probability of `r median(exp(-m1draws$phi_alpha))` \[`r hdi(exp(-m1draws$phi_alpha))`\], with no significant effects of *Bd* infection status or intensity on mortality (`r mean(m1draws$'phi_w[4]')` and `r mean(m1draws$'phi_w[5]')` RJMCMC inclusion, respectively) (@tbl-me, [@fig-me]a). Individual frogs were `r median(m1draws$psi21_alpha / m1draws$psi12_alpha)` \[`r hdi(m1draws$psi21_alpha / m1draws$psi12_alpha)`\] times more likely to clear *Bd* infections (fortnightly hazard rate of `r median(m1draws$psi21_alpha)` \[`r hdi(m1draws$psi21_alpha)`\], corresponding to a probability of `r median(1-exp(-m1draws$psi21_alpha))` \[`r hdi(1-exp(-m1draws$psi21_alpha))`\]) than to gain infections (fortnightly hazard rate of `r median(m1draws$psi12_alpha)` \[`r hdi(m1draws$psi12_alpha)`\], probability of `r median(1-exp(-m1draws$psi12_alpha))` \[`r hdi(1-exp(-m1draws$psi12_alpha))`\]) ([@fig-me]a). There were no clear effects of body weight, body condition, or temperature on mortality and infection dynamics (@tbl-me). Average recapture probabilities were `r median(m1draws$p_alpha)` \[`r hdi(m1draws$p_alpha)`\] and strongly influenced by temperature (log odds change `r median(m1draws$'p_beta[3]')` \[`r hdi(m1draws$'p_beta[3]')`\], `r mean(m1draws$'p_w[3]')` RJMCMC inclusion) ([@fig-me]b). The probability of being infected with *Bd* at first capture was `r median(m1draws$pi_alpha)` \[`r hdi(m1draws$pi_alpha)`\], and there was no support for effects of body weight, body condition, and temperature on this parameter (@tbl-me). This probability was similar to the average infection prevalence that was derived from monitoring the latent ecological states with MCMC (`r median(m1draws$prev_mu)` \[`r hdi(m1draws$prev_mu)`\]).
+
+The mean individual infection intensity estimated by the multievent model was `r median(m1draws$mu_alpha)` \[`r hdi(m1draws$mu_alpha)`\] with an SD of `r median(m1draws$'mu_sigma[1]')` \[`r hdi(m1draws$'mu_sigma[1]')`\]. Swab samples were estimated to have a (true-positive) probability of `r median(m1draws$r_delta)` \[`r hdi(m1draws$r_delta)`\] to detect one log~10~ gene copies of *Bd*, corresponding to a probability of `r median(1-(1-m1draws$r_delta)^m1draws$mu_alpha)` \[`r hdi(1-(1-m1draws$r_delta)^m1draws$mu_alpha)`\] to the detect the average infection (@fig-det). There was limited evidence of false-positives in the swabbing process (`r length(which(m1draws$delta21 > 0.00045)) / nrow(m1draws)` RJMCMC inclusion), but the probability was estimated at `r median(m1draws$delta21[m1draws$delta21 > 0.00045])` \[`r hdi(m1draws$delta21[m1draws$delta21 > 0.00045])`\] when included in the model. qPCR was estimated to have a probability of `r median(m1draws$r_lambda)` \[`r hdi(m1draws$r_lambda)`\] to detect one log~10~ gene copies, yielding a probability of `r median(1-(1-m1draws$r_lambda)^m1draws$mu_alpha)` \[`r hdi(1-(1-m1draws$r_lambda)^m1draws$mu_alpha)`\] to detect the average infection in each run (@fig-det). There was strong support for the presence of false-positives in the qPCR procedure, albeit with low probability (`r median(m1draws$lambda21)` \[`r hdi(m1draws$lambda21)`\], `r length(which(m1draws$lambda21 > 0.00045)) / nrow(m1draws)` RJMCMC inclusion).
+
+\newpage
+
+# Discussion
+
+We found no evidence for that the amphibian chytrid fungus *Bd* influenced mortality rates of a cohort of recently metamorphosed juvenile Fleay's barred frogs (*Mixophyes fleayi*). Additionally, frogs were nearly 3 times more likely to clear their *Bd* infections than to gain them. We estimated the odds of swab samples being infected to be `r median(exp(logit(m2draws$'psi_alpha[1]') - logit(m2draws$'psi_alpha[2]')))` \[`r hdi(exp(logit(m2draws$'psi_alpha[1]') - logit(m2draws$'psi_alpha[2]')))`\] times lower for these juveniles than adults sampled concurrently with `r median(m2draws$'mu_alpha[1]' / m2draws$'mu_alpha[2]')` \[`r hdi(m2draws$'mu_alpha[1]' / m2draws$'mu_alpha[2]')`\] times the mean infection intensities. True infection prevalence (`r median(m1draws$prev_mu)` \[`r hdi(m1draws$prev_mu)`\]) was much higher, however, after correcting for imperfect pathogen detection in the multievent model fitted to the mark-recapture data. It has been widely assumed that juvenile frogs are more susceptible to *Bd* infection than adults frogs [@humphries2022]; our study suggests that this is not the caes for *M. fleayi*.
+
+We did not detect an effect of *Bd* infection (neither infection status nor intensity) on apparent mortality of juvenile frogs, and individuals cleared infections at higher rates than they gained them ([@fig-me]a). By comparison, high infection intensities were associated with increased mortality in adult frogs at the same site [@hollanders2022a]. These results suggest that in this recovered species, the realised impact of chytridiomycosis is not higher for the juvenile life stage than for adults. It is possible that our sample included survivorship bias, where only the survivors of metamorphosis and early post-metamorphosis were included in the study. Previous studies have found increased mortality shortly after metamorphosis [@ortiz-santaliestra2013; @abubakar2016; @waddle2019], which may have occurred with *M. fleayi* prior to inclusion in this study. However, even though some extremely recently metamorphosed individuals were included in the study, we found no evidence for age (using body weight as a proxy) influencing mortality. Laboratory challenge experiments are likely the only feasible way estimate intrinsic susceptibility to chytridiomycosis during metamorphosis, but such studies are lacking in this species. Our results highlight that in the field, juveniles display limited susceptibility to chytridiomycosis after metamorphosis.
+
+We found that adult *M. fleayi* were more likely to be infected with *Bd* and with slightly higher infection intensities than juveniles (@fig-inf). The estimated `r median(m2draws$'mu_alpha[2]' / m2draws$'mu_alpha[1]')` times higher infection intensities may simply reflect the larger surface areas swabbed on adult frogs. Although adult prevalence was estimated to be `r median(m2draws$'psi_alpha[2]')` \[`r hdi(m2draws$'psi_alpha[2]')`\] from swabs over the study period, this is considerably higher than the average adult prevalence estimated over four years at this site (0.14 \[0.09, 0.18\]) [@hollanders2022a]. With just a small sub-sample size of adults (n = 92) with only 35 swabs testing positive, our comparison is not decisive in making life stage comparisons. However, lower juvenile prevalence has been reported for another chytrid-affected species (*Litoria verreauxii alpina*) where it was suggested to facilitate demographic compensation where increased recruitment offsets decreased survival in adults due to chytrid impact [@scheele2015a]. The low infection intensities across life stages in *M. fleayi* may suggest a competent immune response to *Bd*, where the syntopic *Litoria pearsoniana* carried approximately 30% higher loads on average (4.01 \[3.64, 4.4\] log~10~ gene copies per swab) [@hollanders2022a]. Limited *Bd* impact on juvenile *M. fleayi* likely promotes recruitment, which was reported to increase in adult populations during an 8-year study in the early 2000s [@newell2013]. This likely contributed to the large and stable populations observed today [@quick2015; @hollanders2022a].
+
+We are hesitant to suggest that juvenile frogs were less affected by *Bd* than adult frogs; however, our data suggest that juvenile *M. fleayi* are not experiencing greater disease impact in the field, contrary to the results of many previous studies [@sauer2020; @humphries2022] but somewhat in line with some recent results [@bradley2019]. One study found *Bd*-related mortality in *Rana aurora* and *Pseudacris regilla* increased with age, but this study did not incorporate recently metamorphosed (\< 4 weeks post-metamorphosis) [@bradley2019]. Although intrinsic *Bd* susceptibility is difficult to assess in the field due to confounding effects (e.g., no exposure history and dosage), our results indicate that *Bd* is not an imminent threat for juvenile frogs in the field. A recent meta-analysis found that juveniles in laboratory challenge studies are often exposed to high *Bd* loads (1000$\times$ the amount required to find an effect on mortality), perhaps suggesting that laboratory studies have simulated unrealistic scenarios for populations where *Bd* is now endemic [@sauer2020].
+
+Our results highlight the need to use recently developed statistical models that account for imperfect pathogen detection [@direnzo2018; @direnzo2019; @hollanders2022c]. Swabs were particularly unreliable, likely due to the Prepman^®^ DNA extraction protocol [@brannelly2020], with an estimated probability of `r median(1-(1-m1draws$r_delta)^m1draws$mu_alpha)` \[`r hdi(1-(1-m1draws$r_delta)^m1draws$mu_alpha)`\] of detecting the average infection intensity on an individual (@fig-det). As has been previously demonstrated, failing to account for state uncertainty in multistate mark-recapture models inflates the rates of infection dynamics but underestimates infection prevalence [@hollanders2022c]. In our study, the odds of being infected derived from the multievent model were nearly two times higher than estimated using the swab samples alone as a proxy for infection. Accurate quantification of infection prevalence and dynamics require accounting for misclassification errors.
+
+Juvenile *M. fleayi* had high recapture probabilities, with an average of `r median(m1draws$p_alpha)` \[`r hdi(m1draws$p_alpha)`\]---but going as high as `r median(m1draws$'p_mean[1, 1]')` \[`r hdi(m1draws$'p_mean[1, 1]')`\]---and 83 individuals (72%) getting captured more than once over 14 surveys. By comparison, the only other (to our knowledge) longitudinal study on juvenile frogs did not report recapture probabilities but recaptured just 17 individuals (19%) over 19 surveys (median = 1 capture per individual) [@spitzen-vandersluijs2017]. Our results highlight the feasibility of future field studies on juvenile frogs, for which we recommend identifying sites where individuals congregate after dispersal from the breeding sites. Additionally, we stress the importance of identifying environmental covariates associated with activity patterns of the target species; in the case of both juvenile and adult *Mixophyes fleayi*, which live in subtropical rainforests, temperature was by far the most important driver [@hollanders2022a].
+
+Our results suggest that juvenile *M. fleayi* incur limited costs associated with *Bd* after post-metamorphic dispersal. Our study represents an important contribution to understanding the response of different life stages to a pathogen in host populations that have demonstrated recovery after initial epidemics. Limited impact of *Bd* likely results in high survivorship of juveniles and recruitment into adult populations, likely contributing to population stability observed across multiple sites. To our knowledge, this study is one of the first to explicitly investigate chytridiomycosis in juvenile frogs in a field setting and to compare mortality and infection dynamics with adults, especially in the context of high recapture rates which are essential to inference in mark-recapture analyses. We highlight the feasibility of future field studies on juvenile frogs to further investigate the effect of life stage on vulnerability to *Bd*.
+
+\newpage
+
+# Acknowledgments
+
+We conducted field surveys under New South Wales Scientific License 102444 with Southern Cross University Animal Care and Ethics Committee approval (Animal Research Authority 20-034). We are grateful for funding provided by the New South Wales Government's Saving our Species program, with particular thanks extended to Jill Smith and David Hunter. L.G. was supported by Australian Research Council (ARC) grants DP180101415 and DE200100490. H.M. and D.N. were supported under ARC grant DP180101415. We thank South Wales National Parks and Wildlife Service, specifically Stephen King, for allowing us to perform field work. We are grateful to Liam Bolitho for aiding in the photographic identification of frogs, and to Josephine Humphries for providing valuable comments on drafts of the manuscript.
+
+# Conflict of Interest
+
+The authors declare no conflict of interest.
+
+# Funding
+
+The work was supported by ARC grants DP180101415 and DE200100490.
+
+# Ethics
+
+All field work was conducted under New South Wales Scientific License 102444 with Southern Cross University Animal Care and Ethics Committee approval (Animal Research Authority 20-034).
+
+# Data accessibility
+
+All data and code for analysis are availabe on [https://github.com/mhollanders/mfleayi-juveniles](https://github.com/mhollanders/mfleayi-juveniles)
+
+\newpage
+
+# References
+
+::: {#refs}
+:::
+
+\newpage
+
+# Tables
+
+```{=tex}
+\small
+\setstretch{1}
+```
+| **Function**             | **Parameter**             | **Median**                             | **95% HPDI**                            | **RJMCMC**                   | **Prior**              |
+|------------|------------|------------|------------|------------|------------|
+| *Bd* infection status    |                           |                                        |                                         |                              |                        |
+|                          | Intercept (juveniles)     | `r median(m2draws$'psi_alpha[1]')`     | \[`r hdi(m2draws$'psi_alpha[1]')`\]     |                              | $\text{Beta}(1, 1)$    |
+|                          | Intercept (adults)        | `r median(m2draws$'psi_alpha[2]')`     | \[`r hdi(m2draws$'psi_alpha[2]')`\]     |                              | $\text{Beta}(1, 1)$    |
+|                          | Temp                      | `r median(m2draws$'psi_beta[1]')`      | \[`r hdi(m2draws$'psi_beta[1]')`\]      | `r mean(m2draws$'psi_w[1]')` | $\textit{t}_4(0, 1)$   |
+|                          | Rain                      | `r median(m2draws$'psi_beta[2]')`      | \[`r hdi(m2draws$'psi_beta[2]')`\]      | `r mean(m2draws$'psi_w[2]')` | $\textit{t}_4(0, 1)$   |
+|                          | Temp $\times$ rain        | `r median(m2draws$'psi_beta[3]')`      | \[`r hdi(m2draws$'psi_beta[3]')`\]      | `r mean(m2draws$'psi_w[3]')` | $\textit{t}_4(0, 1)$   |
+|                          | *Individual effects (SD)* | `r median(m2draws$'psi_sigma')`        | \[`r hdi(m2draws$'psi_sigma')`\]        |                              | $\textit{t}^+_4(0, 1)$ |
+| *Bd* infection intensity |                           |                                        |                                         |                              |                        |
+|                          | Intercept (juveniles)     | `r median(m2draws$'mu_alpha[1]')`      | \[`r hdi(m2draws$'mu_alpha[1]')`\]      |                              | $\textit{t}_4(3, 1)$   |
+|                          | Intercept (juveniles)     | `r median(m2draws$'mu_alpha[2]')`      | \[`r hdi(m2draws$'mu_alpha[2]')`\]      |                              | $\textit{t}_4(1, 1)$   |
+|                          | Temp                      | `r median(m2draws$'mu_beta[1]')`       | \[`r hdi(m2draws$'mu_beta[1]')`\]       | `r mean(m2draws$'mu_w[1]')`  | $\textit{t}_4(0, 1)$   |
+|                          | Rain                      | `r median(m2draws$'mu_beta[2]')`       | \[`r hdi(m2draws$'mu_beta[2]')`\]       | `r mean(m2draws$'mu_w[2]')`  | $\textit{t}_4(0, 1)$   |
+|                          | Temp $\times$ rain        | `r median(m2draws$'mu_beta[3]')`       | \[`r hdi(m2draws$'mu_beta[3]')`\]       | `r mean(m2draws$'mu_w[3]')`  | $\textit{t}_4(0, 1)$   |
+|                          | *Individual effects (SD)* | `r median(exp(m2draws$'mu_sigma[3]'))` | \[`r hdi(exp(m2draws$'mu_sigma[3]'))`\] |                              | $\textit{t}^+_4(0, 1)$ |
+|                          | SD (juveniles)            | `r median(m2draws$'mu_sigma[1]')`      | \[`r hdi(exp(m2draws$'mu_sigma[1]'))`\] |                              | $\textit{t}^+_4(0, 1)$ |
+|                          | SD (adults)               | `r median(m2draws$'mu_sigma[2]')`      | \[`r hdi(exp(m2draws$'mu_sigma[2]'))`\] |                              | $\textit{t}^+_4(0, 1)$ |
+
+: Parameter estimates (median and 95% HDPI) and prior distributions of the logistic and linear *Bd* infection regression models summarised from 20,000 posterior draws. All predictors were centered and scaled by two SDs. Random effects are italicised. {#tbl-inf tbl-colwidths="\[24,30,9,15,12,10\]"}
+
+\newpage
+
+```{=tex}
+\small
+\setstretch{1}
+```
+| **Function**                      | **Parameter**                        | **Median**                          | **95% HPDI**                         | **RJMCMC**                                                    | **Prior**              |
+|------------|------------|------------|------------|------------|------------|
+| Mortality ($\phi$)                |                                      |                                     |                                      |                                                               |                        |
+|                                   | Intercept                            | `r median(m1draws$phi_alpha)`       | \[`r hdi(m1draws$phi_alpha)`\]       |                                                               | $\text{Exp}(1)$        |
+|                                   | Body weight                          | `r median(m1draws$'phi_beta[1]')`   | \[`r hdi(m1draws$'phi_beta[1]')`\]   | `r mean(m1draws$'phi_w[1]')`                                  | $\textit{t}_4(0, 1)$   |
+|                                   | Body weight $\times$ *Bd* status     | `r median(m1draws$'phi_beta[6]')`   | \[`r hdi(m1draws$'phi_beta[6]')`\]   | `r mean(m1draws$'phi_w[6]')`                                  | $\textit{t}_4(0, 1)$   |
+|                                   | Body condition                       | `r median(m1draws$'phi_beta[2]')`   | \[`r hdi(m1draws$'phi_beta[2]')`\]   | `r mean(m1draws$'phi_w[2]')`                                  | $\textit{t}_4(0, 1)$   |
+|                                   | Temp (interval)                      | `r median(m1draws$'phi_beta[3]')`   | \[`r hdi(m1draws$'phi_beta[3]')`\]   | `r mean(m1draws$'phi_w[3]')`                                  | $\textit{t}_4(0, 1)$   |
+|                                   | *Bd* status                          | `r median(m1draws$'phi_beta[4]')`   | \[`r hdi(m1draws$'phi_beta[4]')`\]   | `r mean(m1draws$'phi_w[4]')`                                  | $\textit{t}_4(0, 1)$   |
+|                                   | *Bd* intensity                       | `r median(m1draws$'phi_beta[5]')`   | \[`r hdi(m1draws$'phi_beta[5]')`\]   | `r mean(m1draws$'phi_w[5]')`                                  | $\textit{t}_4(0, 1)$   |
+| Gaining *Bd* ($\psi_{12}$)        |                                      |                                     |                                      |                                                               |                        |
+|                                   | Intercept                            | `r median(m1draws$psi12_alpha)`     | \[`r hdi(m1draws$psi12_alpha)`\]     |                                                               | $\text{Exp}(1)$        |
+|                                   | Body weight                          | `r median(m1draws$'psi12_beta[1]')` | \[`r hdi(m1draws$'psi12_beta[1]')`\] | `r mean(m1draws$'psi12_w[1]')`                                | $\textit{t}_4(0, 1)$   |
+|                                   | Body condition                       | `r median(m1draws$'psi12_beta[2]')` | \[`r hdi(m1draws$'psi12_beta[2]')`\] | `r mean(m1draws$'psi12_w[2]')`                                | $\textit{t}_4(0, 1)$   |
+|                                   | Temp (interval)                      | `r median(m1draws$'psi12_beta[3]')` | \[`r hdi(m1draws$'psi12_beta[3]')`\] | `r mean(m1draws$'psi12_w[3]')`                                | $\textit{t}_4(0, 1)$   |
+| Clearing *Bd* ($\psi_{21}$)       |                                      |                                     |                                      |                                                               |                        |
+|                                   | Intercept                            | `r median(m1draws$psi21_alpha)`     | \[`r hdi(m1draws$psi21_alpha)`\]     |                                                               | $\text{Exp}(1)$        |
+|                                   | Body weight                          | `r median(m1draws$'psi21_beta[1]')` | \[`r hdi(m1draws$'psi21_beta[1]')`\] | `r mean(m1draws$'psi21_w[1]')`                                | $\textit{t}_4(0, 1)$   |
+|                                   | Body condition                       | `r median(m1draws$'psi21_beta[2]')` | \[`r hdi(m1draws$'psi21_beta[2]')`\] | `r mean(m1draws$'psi21_w[2]')`                                | $\textit{t}_4(0, 1)$   |
+|                                   | Temp (interval)                      | `r median(m1draws$'psi21_beta[3]')` | \[`r hdi(m1draws$'psi21_beta[3]')`\] | `r mean(m1draws$'psi21_w[3]')`                                | $\textit{t}_4(0, 1)$   |
+|                                   | *Bd* intensity                       | `r median(m1draws$'psi21_beta[4]')` | \[`r hdi(m1draws$'psi21_beta[4]')`\] | `r mean(m1draws$'psi21_w[4]')`                                | $\textit{t}_4(0, 1)$   |
+| Recapture ($p$)                   |                                      |                                     |                                      |                                                               |                        |
+|                                   | Intercept                            | `r median(m1draws$p_alpha)`         | \[`r hdi(m1draws$p_alpha)`\]         |                                                               | $\text{Beta}(1, 1)$    |
+|                                   | Body weight                          | `r median(m1draws$'p_beta[1]')`     | \[`r hdi(m1draws$'p_beta[1]')`\]     | `r mean(m1draws$'p_w[1]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | Body condition                       | `r median(m1draws$'p_beta[2]')`     | \[`r hdi(m1draws$'p_beta[2]')`\]     | `r mean(m1draws$'p_w[2]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | **Temp (survey)**                    | `r median(m1draws$'p_beta[3]')`     | \[`r hdi(m1draws$'p_beta[3]')`\]     | `r mean(m1draws$'p_w[3]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | Humidity (survey)                    | `r median(m1draws$'p_beta[4]')`     | \[`r hdi(m1draws$'p_beta[4]')`\]     | `r mean(m1draws$'p_w[4]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | Air pressure (survey)                | `r median(m1draws$'p_beta[5]')`     | \[`r hdi(m1draws$'p_beta[5]')`\]     | `r mean(m1draws$'p_w[5]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | *Bd* status                          | `r median(m1draws$'p_beta[6]')`     | \[`r hdi(m1draws$'p_beta[6]')`\]     | `r mean(m1draws$'p_w[6]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | *Bd* intensity                       | `r median(m1draws$'p_beta[7]')`     | \[`r hdi(m1draws$'p_beta[7]')`\]     | `r mean(m1draws$'p_w[7]')`                                    | $\textit{t}_4(0, 1)$   |
+|                                   | *Survey effects (SD)*                | `r median(m1draws$'p_sigma[1]')`    | \[`r hdi(m1draws$'p_sigma[1]')`\]    |                                                               | $\textit{t}^+_4(0, 1)$ |
+|                                   | *Individual effects (SD)*            | `r median(m1draws$'p_sigma[2]')`    | \[`r hdi(m1draws$'p_sigma[2]')`\]    |                                                               | $\textit{t}^+_4(0, 1)$ |
+|                                   |                                      |                                     |                                      |                                                               |                        |
+| First capture *Bd*+ ($\pi$)       |                                      |                                     |                                      |                                                               |                        |
+|                                   | Intercept                            | `r median(m1draws$pi_alpha)`        | \[`r hdi(m1draws$pi_alpha)`\]        |                                                               | $\text{Beta}(1, 1)$    |
+|                                   | Body weight                          | `r median(m1draws$'pi_beta[1]')`    | \[`r hdi(m1draws$'pi_beta[1]')`\]    | `r mean(m1draws$'pi_w[1]')`                                   | $\textit{t}_4(0, 1)$   |
+|                                   | Body condition                       | `r median(m1draws$'pi_beta[2]')`    | \[`r hdi(m1draws$'pi_beta[2]')`\]    | `r mean(m1draws$'pi_w[2]')`                                   | $\textit{t}_4(0, 1)$   |
+|                                   | Temp (interval)                      | `r median(m1draws$'pi_beta[3]')`    | \[`r hdi(m1draws$'pi_beta[3]')`\]    | `r mean(m1draws$'pi_w[3]')`                                   | $\textit{t}_4(0, 1)$   |
+| *Bd* detection ($\delta,\lambda$) |                                      |                                     |                                      |                                                               |                        |
+|                                   | Swab true-positive ($r_\delta$)      | `r median(m1draws$r_delta)`         | \[`r hdi(m1draws$r_delta)`\]         |                                                               | $\text{Beta}(1, 1)$    |
+|                                   | Swab false-positive ($\delta_{21}$)  | `r median(m1draws$delta21)`         | \[`r hdi(m1draws$delta21)`\]         | `r length(which(m1draws$delta21 > 0.00045)) / nrow(m1draws)`  | $\text{Beta}(1, 10)$   |
+|                                   | qPCR true-positive ($r_\lambda$)     | `r median(m1draws$r_lambda)`        | \[`r hdi(m1draws$r_lambda)`\]        |                                                               | $\text{Beta}(1, 1)$    |
+|                                   | qPCR false-positive ($\lambda_{21}$) | `r median(m1draws$lambda21)`        | \[`r hdi(m1draws$lambda21)`\]        | `r length(which(m1draws$lambda21 > 0.00045)) / nrow(m1draws)` | $\text{Beta}(1, 10)$   |
+| Infection intensity ($\mu$)       |                                      |                                     |                                      |                                                               |                        |
+|                                   | Intercept                            | `r median(m1draws$mu_alpha)`        | \[`r hdi(m1draws$mu_alpha)`\]        |                                                               | $\textit{t}_4(3, 1)$   |
+|                                   | Body weight                          | `r median(m1draws$'mu_beta[1]')`    | \[`r hdi(m1draws$'mu_beta[1]')`\]    | `r mean(m1draws$'mu_w[1]')`                                   | $\textit{t}_4(0, 1)$   |
+|                                   | Body condition                       | `r median(m1draws$'mu_beta[2]')`    | \[`r hdi(m1draws$'mu_beta[2]')`\]    | `r mean(m1draws$'mu_w[2]')`                                   | $\textit{t}_4(0, 1)$   |
+|                                   | Temp (interval)                      | `r median(m1draws$'mu_beta[3]')`    | \[`r hdi(m1draws$'mu_beta[3]')`\]    | `r mean(m1draws$'mu_w[3]')`                                   | $\textit{t}_4(0, 1)$   |
+|                                   | *Individual effects (SD)*            | `r median(m1draws$'mu_sigma[4]')`   | \[`r hdi(m1draws$'mu_sigma[4]')`\]   |                                                               | $\textit{t}^+_4(0, 1)$ |
+|                                   | Population SD                        | `r median(m1draws$'mu_sigma[1]')`   | \[`r hdi(m1draws$'mu_sigma[1]')`\]   |                                                               | $\textit{t}^+_4(0, 1)$ |
+|                                   | Sampling process SD                  | `r median(m1draws$'mu_sigma[2]')`   | \[`r hdi(m1draws$'mu_sigma[2]')`\]   |                                                               | $\textit{t}^+_4(0, 1)$ |
+|                                   | Diagnostic process SD                | `r median(m1draws$'mu_sigma[3]')`   | \[`r hdi(m1draws$'mu_sigma[3]')`\]   |                                                               | $\textit{t}^+_4(0, 1)$ |
+
+: Parameter estimates (median and 95% HDPI) and prior distributions of the multievent mark-recapture model summarised from 20,000 posterior draws. Hazard rates (mortality and gaining/clearing *Bd*) are fortnightly rates. All predictors were centered and scaled by two SDs. Bold face indicates predictors for which the 95% HPDI did not overlap 0, and random effects are italicised. {#tbl-me tbl-colwidths="\[24,30,9,15,12,10\]"}
+
+```{=tex}
+\normalsize
+\setstretch{1}
+```
+\newpage
+
+# Figures
+
+![Dorsal patterns of three juvenile *Mixophyes fleayi*, with number of days between photographs, demonstrating pattern retention which facilitated individual identification. The individual with 245 days was recaptured after the field surveys described in this study.](figs/fig-frogs.jpg){#fig-frogs width="90%"}
+
+\newpage
+
+![**a.** Number of unique individual frogs captured per survey. **b.** Histogram of number of captures per individual frog (note two missing surveys in April and May). **c.** Distribution of frog body weights. Each dot represents a frog, summarised by the mean of the measurements during the study.](figs/fig-caps.png){#fig-caps}
+
+\newpage
+
+![Infection patterns of *Bd* estimated from swab samples collected from adult and juvenile *Mixophyes fleayi*. **a.** Infection status (uninfected, left; infected, right) and posterior distributions of the probability of infection, which had an odds ratio of 1.98 \[0.83, 3.71\]. **b.** Infection intensity (ITS gene copies per swab) and posterior distributions of the means of these distributions, with a difference of 12% \[-2, 27\]. Points represent individuals. Point intervals plotted under the posteriors are their medians and 95% HPDIs.](figs/fig-inf.png){#fig-inf}
+
+\newpage
+
+![Posterior distributions (with medians and 95% HPDIs) of (**a**) fortnightly rates of apparent mortality and infection dynamics and (**b**) survey-specific predicted recapture probabilities. The mortality rate of infected individuals was derived as $\exp \left( \alpha + \beta \right)$, where $\alpha$ is the baseline log mortality hazard rate and $\beta$ is the effect of *Bd* infection status with average intensity. The grey stars in (**b**) show temperatures at the start of each survey.](figs/fig-me.png){#fig-me}
+
+\newpage
+
+![Prediction curves (medians and 95% equal-tailed intervals) of *Bd* detection probabilities in the swabbing and qPCR processes, estimated as $1 - \left( 1 - r \right) ^ n$, where $r$ is the probability of detecting one log~10~ gene copies in each process and $n$ is the individual and sample infection intensity, respectively. The rug plot shows estimated time-varying individual infection intensities from captured individuals.](figs/fig-det.png){#fig-det width="62%"}
