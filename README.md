@@ -1,0 +1,5 @@
+# Analysis and manuscript
+
+This repo contains the analysis and manuscript for the paper "Limited impact of chytridiomycosis on juvenile frogs in a recovered species". The Quarto doc `juveniles-analysis.qmd` contains code for reading in data and covariates, the `nimble` code for the multievent model presented in Hollanders and Royle (2022) (https://doi.org/10.1111/2041-210X.13993), and the analysis to run the model comparing *Bd* infection patterns between juveniles and adults. The file further contains the code to recreate the plots. The `juveniles-manuscript.qmd` is the Quarto doc of the manuscript itself. The posterior MCMC sampes are read in at the top of the document, and called throughout the text to aid reproducibility and reduce errors.
+
+The `data` folder contains all data called in `juveniles-analysis.qmd`. The `mcmc-samples` folder contains the posterior draws of both models, in addition to a `~summary.csv` files that summarised posterior draws for different parameters. The `mcmc-trace` folder contains MCMC traceplots from the models.
