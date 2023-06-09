@@ -808,9 +808,8 @@ MCMCplot(m2samples, horiz = F, params = "diff")
 # Plot setup
 theme_set(theme_classic(base_size = 9, 
                         base_family = "Helvetica"))
-theme_update(axis.ticks = element_line(color = "#333333", size = 1/4),
-             axis.line = element_line(color = NA),
-             panel.border = element_rect(color = "#333333", fill = NA, size = 1/2),
+theme_update(axis.ticks = element_line(color = "#333333", linewidth = 1/4),
+             axis.line = element_line(color = "#333333", linewidth = 1/4),
              axis.title = element_text(color = "#333333"),
              axis.text = element_text(color = "#333333"),
              legend.title = element_text(color = "#333333"),
@@ -875,7 +874,8 @@ m1fig1 <-
                      limits = c(0, 1.1),
                      expand = c(0, 0)) +
   coord_cartesian() +
-  labs(x = "Parameter",
+  labs(subtitle = expression(bold("(a)")),
+       x = "Parameter",
        y = "Rate")
 
 # Prep plot 2
@@ -900,7 +900,7 @@ m1fig2 <-
   geom_line(aes(y = temp / 20), 
             data = temp, 
             color = "grey50",
-            size = 1/10, 
+            linewidth = 1/10, 
             lty = 2) +
   scale_color_manual(values = c("white", "grey50")) +
   stat_halfeye(point_interval = "median_hdci",
@@ -915,19 +915,18 @@ m1fig2 <-
                limits = as.Date(c("2020-02-26", "2020-06-10")),
                date_labels = "%B") +
   scale_y_continuous(breaks = seq(0.2, 1, 0.2),
-                     limits = c(0, 1.0025),
+                     limits = c(0, 1.002),
                      expand = c(0, 0),
                      sec.axis = sec_axis(~. * 20, 
                                          name = "Temperature (ºC)",
                                          breaks = seq(5, 20, 5))) +
-  labs(x = "Survey",
+  labs(subtitle = expression(bold("(b)")),
+       x = "Survey",
        y = "Recapture probability")
 
 # Final
-m1fig <- (m1fig1 | m1fig2) +
-  plot_annotation(tag_levels = "a") &
-  theme(plot.tag = element_text(face = "bold", color = "#333333"))
-ggsave("figs/fig-me.png", width = 6, height = 2.5, units = "in", dpi = 600)
+m1fig <- (m1fig1 | m1fig2)
+ggsave("figs/fig-me.png", width = 6, height = 3, units = "in", dpi = 600)
 ```
 
 ## Comparison between adults and juveniles
@@ -938,7 +937,7 @@ m2fig1 <-
   loads |>
   ggplot(aes(stage)) +
   # Data
-  geom_jitter(aes(y = ifelse(infected == 0, 0.05, 0.95),
+  geom_jitter(aes(y = ifelse(infected == 0, 0.075, 0.925),
                   color = stage == "Adult"),
               height = 0.05,
               shape = 16,
@@ -959,9 +958,10 @@ m2fig1 <-
   scale_x_discrete(expand = c(0.35, 0.25)) +
   scale_y_continuous(breaks = seq(0.2, 1, 0.2),
                      expand = c(0, 0),
-                     limits = c(0, 1.0025)) +
+                     limits = c(0, 1.0015)) +
   coord_flip() +
-  labs(x = NULL,
+  labs(subtitle = expression(bold("(a)")),
+       x = NULL,
        y = expression(paste(italic("Bd")," infection status")))
 
 # Intensity
@@ -985,17 +985,19 @@ m2fig2 <-
   scale_x_continuous(breaks = seq(1, 7, 1),
                      limits = c(0.5, 7.5),
                      expand = c(0, 0),
-                     labels = function(x) {return(paste0("10^", x))}) +
+                     labels = function(x) {
+                       return(paste0("10^", x))
+                     }) +
   theme(axis.text.x = element_markdown(),
-        plot.subtitle = element_text(size = rel(0.8))) +
-  labs(x = expression(paste(italic("Bd")," infection intensity")),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(subtitle = expression(bold("(b)")),
+       x = expression(paste(italic("Bd")," infection intensity")),
        y = NULL)
 
 # Final
-m2fig <- (m2fig1 | m2fig2) +
-  plot_annotation(tag_levels = "a") &
-  theme(plot.tag = element_text(face = "bold", color = "#333333"))
-ggsave("figs/fig-inf.png", width = 6, height = 2.5, units = "in", dpi = 600)
+m2fig <- (m2fig1 | m2fig2)
+ggsave("figs/fig-inf.png", width = 6, height = 3, units = "in", dpi = 600)
 ```
 
 ## Pathogen detection
